@@ -1,0 +1,81 @@
+{
+  "_comment": "Use these sample inputs when triggering the workflow in the Orkes Conductor UI or via API",
+
+  "scenario_1_happy_path": {
+    "_description": "Normal order - low fraud risk, payment succeeds, full fulfillment",
+    "order_id": "ORD-001",
+    "customer_id": "CUST-ABC123",
+    "order_total": 49.99,
+    "payment_method": "VISA_4242",
+    "cart_items": [
+      { "sku": "SKU-WIDGET-001", "name": "Blue Widget", "quantity": 2, "price": 19.99 },
+      { "sku": "SKU-GADGET-007", "name": "Gadget Pro", "quantity": 1, "price": 10.01 }
+    ],
+    "shipping_address": {
+      "name": "Jane Smith",
+      "street": "123 Main St",
+      "city": "San Francisco",
+      "state": "CA",
+      "zip": "94105",
+      "country": "US"
+    }
+  },
+
+  "scenario_2_high_fraud_approved": {
+    "_description": "High-value order triggers fraud review HUMAN task. Reviewer approves it. Workflow continues to fulfillment.",
+    "order_id": "ORD-002",
+    "customer_id": "CUST-NEW999",
+    "order_total": 799.00,
+    "payment_method": "AMEX_3714",
+    "cart_items": [
+      { "sku": "SKU-LAPTOP-001", "name": "Pro Laptop", "quantity": 1, "price": 799.00 }
+    ],
+    "shipping_address": {
+      "name": "John Doe",
+      "street": "456 Market St",
+      "city": "New York",
+      "state": "NY",
+      "zip": "10001",
+      "country": "US"
+    }
+  },
+
+  "scenario_3_high_fraud_rejected": {
+    "_description": "High-value order triggers fraud review. Reviewer REJECTS it. Workflow terminates with CANCELLED status.",
+    "_note": "In the HUMAN task UI, set decision=REJECTED to trigger the cancellation branch",
+    "order_id": "ORD-003",
+    "customer_id": "CUST-SUSPICIOUS",
+    "order_total": 1250.00,
+    "payment_method": "VISA_9999",
+    "cart_items": [
+      { "sku": "SKU-PHONE-X", "name": "Premium Phone", "quantity": 3, "price": 416.67 }
+    ],
+    "shipping_address": {
+      "name": "Bob Builder",
+      "street": "789 Unknown Ave",
+      "city": "Las Vegas",
+      "state": "NV",
+      "zip": "89101",
+      "country": "US"
+    }
+  },
+
+  "scenario_4_payment_failure": {
+    "_description": "Payment fails because payment_method is INVALID_CARD. Workflow sends failure notification and terminates.",
+    "order_id": "ORD-004",
+    "customer_id": "CUST-DEF456",
+    "order_total": 89.50,
+    "payment_method": "INVALID_CARD",
+    "cart_items": [
+      { "sku": "SKU-BOOK-042", "name": "Developer Handbook", "quantity": 1, "price": 89.50 }
+    ],
+    "shipping_address": {
+      "name": "Alice Dev",
+      "street": "1 Tech Drive",
+      "city": "Austin",
+      "state": "TX",
+      "zip": "78701",
+      "country": "US"
+    }
+  }
+}
