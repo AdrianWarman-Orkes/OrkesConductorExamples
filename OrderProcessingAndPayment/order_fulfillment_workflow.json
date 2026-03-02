@@ -1,0 +1,526 @@
+{
+  "createTime": 1772492613927,
+  "updateTime": 0,
+  "name": "order_fulfillment_workflow",
+  "description": "Advanced order fulfillment and payment processing workflow. Demonstrates: FORK/JOIN parallelism, SWITCH branching, human approval tasks, retries, sub-workflows, and event publishing.",
+  "version": 1,
+  "tasks": [
+    {
+      "name": "validate_order",
+      "taskReferenceName": "validate_order_ref",
+      "description": "Validates order items, pricing, and customer data. Returns validation status and any errors.",
+      "inputParameters": {
+        "order_id": "${workflow.input.order_id}",
+        "customer_id": "${workflow.input.customer_id}",
+        "cart_items": "${workflow.input.cart_items}",
+        "order_total": "${workflow.input.order_total}"
+      },
+      "type": "SIMPLE",
+      "decisionCases": {},
+      "defaultCase": [],
+      "forkTasks": [],
+      "startDelay": 0,
+      "joinOn": [],
+      "optional": false,
+      "defaultExclusiveJoinTask": [],
+      "asyncComplete": false,
+      "loopOver": [],
+      "retryCount": 3,
+      "onStateChange": {},
+      "permissive": false
+    },
+    {
+      "name": "check_fraud",
+      "taskReferenceName": "check_fraud_ref",
+      "description": "Runs fraud scoring on the order. Returns a risk_score (0-100) and recommendation.",
+      "inputParameters": {
+        "order_id": "${workflow.input.order_id}",
+        "customer_id": "${workflow.input.customer_id}",
+        "order_total": "${workflow.input.order_total}",
+        "payment_method": "${workflow.input.payment_method}"
+      },
+      "type": "SIMPLE",
+      "decisionCases": {},
+      "defaultCase": [],
+      "forkTasks": [],
+      "startDelay": 0,
+      "joinOn": [],
+      "optional": false,
+      "defaultExclusiveJoinTask": [],
+      "asyncComplete": false,
+      "loopOver": [],
+      "retryCount": 2,
+      "onStateChange": {},
+      "permissive": false
+    },
+    {
+      "name": "fraud_decision",
+      "taskReferenceName": "fraud_decision_ref",
+      "description": "Routes the workflow based on fraud risk score. High risk goes to human review; low risk proceeds automatically.",
+      "inputParameters": {},
+      "type": "SWITCH",
+      "decisionCases": {
+        "HIGH": [
+          {
+            "name": "human_fraud_review",
+            "taskReferenceName": "human_fraud_review_ref",
+            "description": "FLAGS: High fraud risk detected. A human reviewer must approve or reject this order before processing continues.",
+            "inputParameters": {
+              "order_id": "${workflow.input.order_id}",
+              "customer_id": "${workflow.input.customer_id}",
+              "order_total": "${workflow.input.order_total}",
+              "fraud_score": "${check_fraud_ref.output.risk_score}",
+              "fraud_reasons": "${check_fraud_ref.output.reasons}",
+              "display_message": "Order flagged for high fraud risk. Review and approve or reject."
+            },
+            "type": "HUMAN",
+            "decisionCases": {},
+            "defaultCase": [],
+            "forkTasks": [],
+            "startDelay": 0,
+            "joinOn": [],
+            "optional": false,
+            "defaultExclusiveJoinTask": [],
+            "asyncComplete": false,
+            "loopOver": [],
+            "onStateChange": {},
+            "permissive": false
+          },
+          {
+            "name": "evaluate_fraud_review",
+            "taskReferenceName": "evaluate_fraud_review_ref",
+            "inputParameters": {},
+            "type": "SWITCH",
+            "decisionCases": {
+              "REJECTED": [
+                {
+                  "name": "cancel_order",
+                  "taskReferenceName": "cancel_order_ref",
+                  "description": "Cancels the order and notifies the customer of rejection.",
+                  "inputParameters": {
+                    "order_id": "${workflow.input.order_id}",
+                    "customer_id": "${workflow.input.customer_id}",
+                    "reason": "Order rejected after fraud review",
+                    "reviewer_notes": "${human_fraud_review_ref.output.notes}"
+                  },
+                  "type": "SIMPLE",
+                  "decisionCases": {},
+                  "defaultCase": [],
+                  "forkTasks": [],
+                  "startDelay": 0,
+                  "joinOn": [],
+                  "optional": false,
+                  "defaultExclusiveJoinTask": [],
+                  "asyncComplete": false,
+                  "loopOver": [],
+                  "onStateChange": {},
+                  "permissive": false
+                },
+                {
+                  "name": "terminate_rejected",
+                  "taskReferenceName": "terminate_rejected_ref",
+                  "inputParameters": {
+                    "terminationStatus": "COMPLETED",
+                    "workflowOutput": {
+                      "final_status": "CANCELLED",
+                      "reason": "Rejected by fraud review team"
+                    }
+                  },
+                  "type": "TERMINATE",
+                  "decisionCases": {},
+                  "defaultCase": [],
+                  "forkTasks": [],
+                  "startDelay": 0,
+                  "joinOn": [],
+                  "optional": false,
+                  "defaultExclusiveJoinTask": [],
+                  "asyncComplete": false,
+                  "loopOver": [],
+                  "onStateChange": {},
+                  "permissive": false
+                }
+              ]
+            },
+            "defaultCase": [],
+            "forkTasks": [],
+            "startDelay": 0,
+            "joinOn": [],
+            "optional": false,
+            "defaultExclusiveJoinTask": [],
+            "asyncComplete": false,
+            "loopOver": [],
+            "evaluatorType": "value-param",
+            "expression": "${human_fraud_review_ref.output.decision}",
+            "onStateChange": {},
+            "permissive": false
+          }
+        ],
+        "LOW": [],
+        "MEDIUM": []
+      },
+      "defaultCase": [],
+      "forkTasks": [],
+      "startDelay": 0,
+      "joinOn": [],
+      "optional": false,
+      "defaultExclusiveJoinTask": [],
+      "asyncComplete": false,
+      "loopOver": [],
+      "evaluatorType": "value-param",
+      "expression": "${check_fraud_ref.output.risk_level}",
+      "onStateChange": {},
+      "permissive": false
+    },
+    {
+      "name": "charge_payment",
+      "taskReferenceName": "charge_payment_ref",
+      "description": "Charges the customer's payment method. Simulates calling a payment gateway (e.g. Stripe). Returns transaction_id on success.",
+      "inputParameters": {
+        "order_id": "${workflow.input.order_id}",
+        "customer_id": "${workflow.input.customer_id}",
+        "amount": "${workflow.input.order_total}",
+        "payment_method": "${workflow.input.payment_method}"
+      },
+      "type": "SIMPLE",
+      "decisionCases": {},
+      "defaultCase": [],
+      "forkTasks": [],
+      "startDelay": 0,
+      "joinOn": [],
+      "optional": false,
+      "defaultExclusiveJoinTask": [],
+      "asyncComplete": false,
+      "loopOver": [],
+      "retryCount": 3,
+      "onStateChange": {},
+      "permissive": false
+    },
+    {
+      "name": "payment_status_check",
+      "taskReferenceName": "payment_status_check_ref",
+      "description": "Branches based on payment outcome: SUCCESS continues to fulfillment, FAILED routes to failure handling.",
+      "inputParameters": {},
+      "type": "SWITCH",
+      "decisionCases": {
+        "FAILED": [
+          {
+            "name": "notify_payment_failure",
+            "taskReferenceName": "notify_payment_failure_ref",
+            "description": "Notifies the customer that their payment failed and prompts them to update payment info.",
+            "inputParameters": {
+              "customer_id": "${workflow.input.customer_id}",
+              "order_id": "${workflow.input.order_id}",
+              "failure_reason": "${charge_payment_ref.output.failure_reason}"
+            },
+            "type": "SIMPLE",
+            "decisionCases": {},
+            "defaultCase": [],
+            "forkTasks": [],
+            "startDelay": 0,
+            "joinOn": [],
+            "optional": false,
+            "defaultExclusiveJoinTask": [],
+            "asyncComplete": false,
+            "loopOver": [],
+            "onStateChange": {},
+            "permissive": false
+          },
+          {
+            "name": "terminate_payment_failed",
+            "taskReferenceName": "terminate_payment_failed_ref",
+            "inputParameters": {
+              "terminationStatus": "FAILED",
+              "workflowOutput": {
+                "final_status": "PAYMENT_FAILED",
+                "reason": "${charge_payment_ref.output.failure_reason}"
+              }
+            },
+            "type": "TERMINATE",
+            "decisionCases": {},
+            "defaultCase": [],
+            "forkTasks": [],
+            "startDelay": 0,
+            "joinOn": [],
+            "optional": false,
+            "defaultExclusiveJoinTask": [],
+            "asyncComplete": false,
+            "loopOver": [],
+            "onStateChange": {},
+            "permissive": false
+          }
+        ],
+        "SUCCESS": []
+      },
+      "defaultCase": [],
+      "forkTasks": [],
+      "startDelay": 0,
+      "joinOn": [],
+      "optional": false,
+      "defaultExclusiveJoinTask": [],
+      "asyncComplete": false,
+      "loopOver": [],
+      "evaluatorType": "value-param",
+      "expression": "${charge_payment_ref.output.status}",
+      "onStateChange": {},
+      "permissive": false
+    },
+    {
+      "name": "fulfillment_fork",
+      "taskReferenceName": "fulfillment_fork_ref",
+      "description": "Runs inventory reservation, warehouse notification, and invoice generation IN PARALLEL to speed up fulfillment.",
+      "inputParameters": {},
+      "type": "FORK_JOIN",
+      "decisionCases": {},
+      "defaultCase": [],
+      "forkTasks": [
+        [
+          {
+            "name": "reserve_inventory",
+            "taskReferenceName": "reserve_inventory_ref",
+            "description": "Reserves stock for each item in the order. Returns reservation_id per item.",
+            "inputParameters": {
+              "order_id": "${workflow.input.order_id}",
+              "cart_items": "${workflow.input.cart_items}"
+            },
+            "type": "SIMPLE",
+            "decisionCases": {},
+            "defaultCase": [],
+            "forkTasks": [],
+            "startDelay": 0,
+            "joinOn": [],
+            "optional": false,
+            "defaultExclusiveJoinTask": [],
+            "asyncComplete": false,
+            "loopOver": [],
+            "retryCount": 2,
+            "onStateChange": {},
+            "permissive": false
+          }
+        ],
+        [
+          {
+            "name": "generate_invoice",
+            "taskReferenceName": "generate_invoice_ref",
+            "description": "Generates a PDF invoice for the order and returns an invoice_url.",
+            "inputParameters": {
+              "order_id": "${workflow.input.order_id}",
+              "customer_id": "${workflow.input.customer_id}",
+              "cart_items": "${workflow.input.cart_items}",
+              "order_total": "${workflow.input.order_total}",
+              "transaction_id": "${charge_payment_ref.output.transaction_id}"
+            },
+            "type": "SIMPLE",
+            "decisionCases": {},
+            "defaultCase": [],
+            "forkTasks": [],
+            "startDelay": 0,
+            "joinOn": [],
+            "optional": false,
+            "defaultExclusiveJoinTask": [],
+            "asyncComplete": false,
+            "loopOver": [],
+            "onStateChange": {},
+            "permissive": false
+          }
+        ],
+        [
+          {
+            "name": "notify_warehouse",
+            "taskReferenceName": "notify_warehouse_ref",
+            "description": "Sends a pick-and-pack request to the warehouse management system.",
+            "inputParameters": {
+              "order_id": "${workflow.input.order_id}",
+              "cart_items": "${workflow.input.cart_items}",
+              "shipping_address": "${workflow.input.shipping_address}"
+            },
+            "type": "SIMPLE",
+            "decisionCases": {},
+            "defaultCase": [],
+            "forkTasks": [],
+            "startDelay": 0,
+            "joinOn": [],
+            "optional": false,
+            "defaultExclusiveJoinTask": [],
+            "asyncComplete": false,
+            "loopOver": [],
+            "onStateChange": {},
+            "permissive": false
+          }
+        ]
+      ],
+      "startDelay": 0,
+      "joinOn": [],
+      "optional": false,
+      "defaultExclusiveJoinTask": [],
+      "asyncComplete": false,
+      "loopOver": [],
+      "onStateChange": {},
+      "permissive": false
+    },
+    {
+      "name": "fulfillment_join",
+      "taskReferenceName": "fulfillment_join_ref",
+      "description": "Waits for all three parallel fulfillment tasks to complete before continuing.",
+      "inputParameters": {},
+      "type": "JOIN",
+      "decisionCases": {},
+      "defaultCase": [],
+      "forkTasks": [],
+      "startDelay": 0,
+      "joinOn": [
+        "reserve_inventory_ref",
+        "generate_invoice_ref",
+        "notify_warehouse_ref"
+      ],
+      "optional": false,
+      "defaultExclusiveJoinTask": [],
+      "asyncComplete": false,
+      "loopOver": [],
+      "onStateChange": {},
+      "permissive": false
+    },
+    {
+      "name": "create_shipment",
+      "taskReferenceName": "create_shipment_ref",
+      "description": "Creates a shipping label and tracking number via the carrier API. Returns tracking_number and estimated_delivery.",
+      "inputParameters": {
+        "order_id": "${workflow.input.order_id}",
+        "shipping_address": "${workflow.input.shipping_address}",
+        "cart_items": "${workflow.input.cart_items}",
+        "warehouse_confirmation": "${notify_warehouse_ref.output.confirmation_id}"
+      },
+      "type": "SIMPLE",
+      "decisionCases": {},
+      "defaultCase": [],
+      "forkTasks": [],
+      "startDelay": 0,
+      "joinOn": [],
+      "optional": false,
+      "defaultExclusiveJoinTask": [],
+      "asyncComplete": false,
+      "loopOver": [],
+      "retryCount": 3,
+      "onStateChange": {},
+      "permissive": false
+    },
+    {
+      "name": "post_fulfillment_fork",
+      "taskReferenceName": "post_fulfillment_fork_ref",
+      "description": "Runs customer notification and internal analytics event IN PARALLEL after shipment is created.",
+      "inputParameters": {},
+      "type": "FORK_JOIN",
+      "decisionCases": {},
+      "defaultCase": [],
+      "forkTasks": [
+        [
+          {
+            "name": "notify_customer",
+            "taskReferenceName": "notify_customer_task_ref",
+            "description": "Sends order confirmation + tracking info to the customer via email and SMS.",
+            "inputParameters": {
+              "customer_id": "${workflow.input.customer_id}",
+              "order_id": "${workflow.input.order_id}",
+              "tracking_number": "${create_shipment_ref.output.tracking_number}",
+              "estimated_delivery": "${create_shipment_ref.output.estimated_delivery}",
+              "invoice_url": "${generate_invoice_ref.output.invoice_url}"
+            },
+            "type": "SIMPLE",
+            "decisionCases": {},
+            "defaultCase": [],
+            "forkTasks": [],
+            "startDelay": 0,
+            "joinOn": [],
+            "optional": false,
+            "defaultExclusiveJoinTask": [],
+            "asyncComplete": false,
+            "loopOver": [],
+            "onStateChange": {},
+            "permissive": false
+          }
+        ],
+        [
+          {
+            "name": "publish_order_event",
+            "taskReferenceName": "publish_order_event_ref",
+            "description": "Publishes an ORDER_FULFILLED event to an internal message bus for downstream systems (analytics, loyalty, CRM).",
+            "inputParameters": {
+              "event_type": "ORDER_FULFILLED",
+              "order_id": "${workflow.input.order_id}",
+              "customer_id": "${workflow.input.customer_id}",
+              "order_total": "${workflow.input.order_total}",
+              "tracking_number": "${create_shipment_ref.output.tracking_number}",
+              "fulfilled_at": "${workflow.createTime}"
+            },
+            "type": "EVENT",
+            "decisionCases": {},
+            "defaultCase": [],
+            "forkTasks": [],
+            "startDelay": 0,
+            "joinOn": [],
+            "sink": "conductor:order_events",
+            "optional": false,
+            "defaultExclusiveJoinTask": [],
+            "asyncComplete": false,
+            "loopOver": [],
+            "onStateChange": {},
+            "permissive": false
+          }
+        ]
+      ],
+      "startDelay": 0,
+      "joinOn": [],
+      "optional": false,
+      "defaultExclusiveJoinTask": [],
+      "asyncComplete": false,
+      "loopOver": [],
+      "onStateChange": {},
+      "permissive": false
+    },
+    {
+      "name": "post_fulfillment_join",
+      "taskReferenceName": "post_fulfillment_join_ref",
+      "inputParameters": {},
+      "type": "JOIN",
+      "decisionCases": {},
+      "defaultCase": [],
+      "forkTasks": [],
+      "startDelay": 0,
+      "joinOn": [
+        "notify_customer_task_ref",
+        "publish_order_event_ref"
+      ],
+      "optional": false,
+      "defaultExclusiveJoinTask": [],
+      "asyncComplete": false,
+      "loopOver": [],
+      "onStateChange": {},
+      "permissive": false
+    }
+  ],
+  "inputParameters": [
+    "order_id",
+    "customer_id",
+    "cart_items",
+    "payment_method",
+    "shipping_address",
+    "order_total"
+  ],
+  "outputParameters": {
+    "order_id": "${workflow.input.order_id}",
+    "final_status": "${notify_customer_task_ref.output.status}",
+    "tracking_number": "${create_shipment_ref.output.tracking_number}",
+    "payment_transaction_id": "${charge_payment_ref.output.transaction_id}"
+  },
+  "failureWorkflow": "order_fulfillment_failure_workflow",
+  "schemaVersion": 2,
+  "restartable": true,
+  "workflowStatusListenerEnabled": true,
+  "ownerEmail": "adrian.warman@orkes.io",
+  "timeoutPolicy": "ALERT_ONLY",
+  "timeoutSeconds": 0,
+  "variables": {},
+  "inputTemplate": {},
+  "enforceSchema": true,
+  "metadata": {},
+  "maskedFields": []
+}
