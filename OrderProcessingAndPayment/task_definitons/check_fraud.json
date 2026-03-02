@@ -1,0 +1,28 @@
+{
+  "name": "check_fraud",
+  "description": "Runs a simulated fraud scoring model against the order. Returns a risk_score (0-100), risk_level (LOW / MEDIUM / HIGH), and list of flag reasons.",
+  "retryCount": 3,
+  "timeoutSeconds": 3600,
+  "timeoutPolicy": "TIME_OUT_WF",
+  "retryLogic": "FIXED",
+  "retryDelaySeconds": 60,
+  "responseTimeoutSeconds": 600,
+  "rateLimitPerFrequency": 0,
+  "rateLimitFrequencyInSeconds": 1,
+  "ownerEmail": "adrian.warman@orkes.io",
+  "pollTimeoutSeconds": 3600,
+  "inputKeys": [
+    "order_id",
+    "customer_id",
+    "order_total",
+    "payment_method"
+  ],
+  "outputKeys": [
+    "risk_score",
+    "risk_level",
+    "reasons"
+  ],
+  "inputTemplate": {},
+  "backoffScaleFactor": 1,
+  "concurrentExecLimit": 0
+}
