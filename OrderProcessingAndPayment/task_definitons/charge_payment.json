@@ -1,0 +1,19 @@
+{
+    "name": "charge_payment",
+    "description": "Charges the customer's payment method via the payment gateway. Returns a transaction_id on SUCCESS or a failure_reason on FAILED.",
+    "retryCount": 3,
+    "timeoutSeconds": 45,
+    "timeoutPolicy": "TIME_OUT_WF",
+    "retryLogic": "EXPONENTIAL_BACKOFF",
+    "retryDelaySeconds": 15,
+    "responseTimeoutSeconds": 30,
+    "rateLimitPerFrequency": 0,
+    "rateLimitFrequencyInSeconds": 1,
+    "ownerEmail": "demo@example.com",
+    "pollTimeoutSeconds": 3600,
+    "inputKeys": ["order_id", "customer_id", "amount", "payment_method"],
+    "outputKeys": ["status", "transaction_id", "failure_reason", "charged_at"],
+    "inputTemplate": {},
+    "backoffScaleFactor": 2,
+    "concurrentExecLimit": 0
+  }
