@@ -1,0 +1,19 @@
+{
+    "name": "cancel_order",
+    "description": "Cancels an order after a fraud rejection decision. Updates order status and queues a customer cancellation notification.",
+    "retryCount": 2,
+    "timeoutSeconds": 20,
+    "timeoutPolicy": "TIME_OUT_WF",
+    "retryLogic": "FIXED",
+    "retryDelaySeconds": 5,
+    "responseTimeoutSeconds": 15,
+    "rateLimitPerFrequency": 0,
+    "rateLimitFrequencyInSeconds": 1,
+    "ownerEmail": "demo@example.com",
+    "pollTimeoutSeconds": 3600,
+    "inputKeys": ["order_id", "customer_id", "reason", "reviewer_notes"],
+    "outputKeys": ["status", "cancelled_at"],
+    "inputTemplate": {},
+    "backoffScaleFactor": 1,
+    "concurrentExecLimit": 0
+  }
