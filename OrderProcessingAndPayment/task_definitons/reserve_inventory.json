@@ -1,0 +1,19 @@
+{
+    "name": "reserve_inventory",
+    "description": "Reserves stock for each cart item in the warehouse inventory system. Returns a reservation_id per item. Fails if any item is out of stock.",
+    "retryCount": 2,
+    "timeoutSeconds": 30,
+    "timeoutPolicy": "TIME_OUT_WF",
+    "retryLogic": "FIXED",
+    "retryDelaySeconds": 10,
+    "responseTimeoutSeconds": 20,
+    "rateLimitPerFrequency": 0,
+    "rateLimitFrequencyInSeconds": 1,
+    "ownerEmail": "demo@example.com",
+    "pollTimeoutSeconds": 3600,
+    "inputKeys": ["order_id", "cart_items"],
+    "outputKeys": ["reservation_ids", "reserved_at"],
+    "inputTemplate": {},
+    "backoffScaleFactor": 1,
+    "concurrentExecLimit": 0
+  }
