@@ -1,0 +1,28 @@
+{
+  "name": "validate_order",
+  "description": "Validates order items, pricing totals, and customer data. Simulates checking that all cart items are in-stock and the order total matches.",
+  "retryCount": 3,
+  "timeoutSeconds": 3600,
+  "timeoutPolicy": "TIME_OUT_WF",
+  "retryLogic": "FIXED",
+  "retryDelaySeconds": 60,
+  "responseTimeoutSeconds": 600,
+  "rateLimitPerFrequency": 0,
+  "rateLimitFrequencyInSeconds": 1,
+  "ownerEmail": "adrian.warman@orkes.io",
+  "pollTimeoutSeconds": 3600,
+  "inputKeys": [
+    "order_id",
+    "customer_id",
+    "cart_items",
+    "order_total"
+  ],
+  "outputKeys": [
+    "is_valid",
+    "validation_errors",
+    "validated_total"
+  ],
+  "inputTemplate": {},
+  "backoffScaleFactor": 1,
+  "concurrentExecLimit": 0
+}
