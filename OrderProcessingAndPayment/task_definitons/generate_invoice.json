@@ -1,0 +1,19 @@
+{
+    "name": "generate_invoice",
+    "description": "Generates a PDF invoice for the completed order and returns a hosted invoice_url.",
+    "retryCount": 2,
+    "timeoutSeconds": 30,
+    "timeoutPolicy": "TIME_OUT_WF",
+    "retryLogic": "FIXED",
+    "retryDelaySeconds": 5,
+    "responseTimeoutSeconds": 20,
+    "rateLimitPerFrequency": 0,
+    "rateLimitFrequencyInSeconds": 1,
+    "ownerEmail": "demo@example.com",
+    "pollTimeoutSeconds": 3600,
+    "inputKeys": ["order_id", "customer_id", "cart_items", "order_total", "transaction_id"],
+    "outputKeys": ["invoice_url", "invoice_id", "generated_at"],
+    "inputTemplate": {},
+    "backoffScaleFactor": 1,
+    "concurrentExecLimit": 0
+  }
