@@ -1,0 +1,19 @@
+{
+    "name": "notify_warehouse",
+    "description": "Sends a pick-and-pack instruction to the warehouse management system (WMS). Returns a confirmation_id when the WMS acknowledges the request.",
+    "retryCount": 3,
+    "timeoutSeconds": 20,
+    "timeoutPolicy": "TIME_OUT_WF",
+    "retryLogic": "EXPONENTIAL_BACKOFF",
+    "retryDelaySeconds": 10,
+    "responseTimeoutSeconds": 15,
+    "rateLimitPerFrequency": 0,
+    "rateLimitFrequencyInSeconds": 1,
+    "ownerEmail": "demo@example.com",
+    "pollTimeoutSeconds": 3600,
+    "inputKeys": ["order_id", "cart_items", "shipping_address"],
+    "outputKeys": ["confirmation_id", "estimated_pick_time"],
+    "inputTemplate": {},
+    "backoffScaleFactor": 2,
+    "concurrentExecLimit": 0
+  }
