@@ -1,0 +1,19 @@
+{
+    "name": "notify_payment_failure",
+    "description": "Sends a payment failure notification to the customer via email and SMS, prompting them to update their payment method.",
+    "retryCount": 3,
+    "timeoutSeconds": 15,
+    "timeoutPolicy": "TIME_OUT_WF",
+    "retryLogic": "FIXED",
+    "retryDelaySeconds": 5,
+    "responseTimeoutSeconds": 10,
+    "rateLimitPerFrequency": 0,
+    "rateLimitFrequencyInSeconds": 1,
+    "ownerEmail": "demo@example.com",
+    "pollTimeoutSeconds": 3600,
+    "inputKeys": ["customer_id", "order_id", "failure_reason"],
+    "outputKeys": ["status", "notification_id"],
+    "inputTemplate": {},
+    "backoffScaleFactor": 1,
+    "concurrentExecLimit": 0
+  }
