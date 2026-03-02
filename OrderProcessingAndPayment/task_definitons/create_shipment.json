@@ -1,0 +1,19 @@
+{
+    "name": "create_shipment",
+    "description": "Creates a shipment record and generates a carrier tracking label. Returns a tracking_number, carrier name, and estimated_delivery date.",
+    "retryCount": 3,
+    "timeoutSeconds": 45,
+    "timeoutPolicy": "TIME_OUT_WF",
+    "retryLogic": "EXPONENTIAL_BACKOFF",
+    "retryDelaySeconds": 10,
+    "responseTimeoutSeconds": 30,
+    "rateLimitPerFrequency": 0,
+    "rateLimitFrequencyInSeconds": 1,
+    "ownerEmail": "demo@example.com",
+    "pollTimeoutSeconds": 3600,
+    "inputKeys": ["order_id", "shipping_address", "cart_items", "warehouse_confirmation"],
+    "outputKeys": ["tracking_number", "carrier", "estimated_delivery", "label_url"],
+    "inputTemplate": {},
+    "backoffScaleFactor": 2,
+    "concurrentExecLimit": 0
+  }
