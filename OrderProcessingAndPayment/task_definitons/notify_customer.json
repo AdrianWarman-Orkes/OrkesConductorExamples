@@ -1,0 +1,19 @@
+{
+    "name": "notify_customer",
+    "description": "Sends an order confirmation email and SMS to the customer containing the tracking number, estimated delivery date, and a link to their invoice.",
+    "retryCount": 3,
+    "timeoutSeconds": 20,
+    "timeoutPolicy": "TIME_OUT_WF",
+    "retryLogic": "FIXED",
+    "retryDelaySeconds": 5,
+    "responseTimeoutSeconds": 15,
+    "rateLimitPerFrequency": 0,
+    "rateLimitFrequencyInSeconds": 1,
+    "ownerEmail": "demo@example.com",
+    "pollTimeoutSeconds": 3600,
+    "inputKeys": ["customer_id", "order_id", "tracking_number", "estimated_delivery", "invoice_url"],
+    "outputKeys": ["status", "email_id", "sms_id", "notified_at"],
+    "inputTemplate": {},
+    "backoffScaleFactor": 1,
+    "concurrentExecLimit": 0
+  }
